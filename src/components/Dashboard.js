@@ -9,11 +9,10 @@ import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import Badge from '@material-ui/core/Badge';
-import Link from '@material-ui/core/Link';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
-import { mainListItems } from '../models/SidebarItems';
+import {MainListItems} from '../models/SidebarItems';
 import clsx from 'clsx';
 import Hidden from '@material-ui/core/Hidden';
 import {
@@ -23,24 +22,25 @@ import {
   Redirect
 } from "react-router-dom";
 
-import Articles from './Articles';
-import SingleArticle from './SingleArticle';
-import Categories from './Categories'
+import Articles from './Articles/Articles';
+import ArticlesAddEdit from './Articles/ArticlesAddEdit';
+import Categories from './Categories';
+import MenuMaster from './Menus/MenuMaster';
 
 require('dotenv').config();
 
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © '}
-      <Link color="inherit" href="https://material-ui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
+// function Copyright() {
+//   return (
+//     <Typography variant="body2" color="textSecondary" align="center">
+//       {'Copyright © '}
+//       <Link color="inherit" href="https://material-ui.com/">
+//         Your Website
+//       </Link>{' '}
+//       {new Date().getFullYear()}
+//       {'.'}
+//     </Typography>
+//   );
+// }
 
 const drawerWidth = 210;
 
@@ -127,14 +127,18 @@ const useStyles = makeStyles((theme) => ({
 export default function Dashboard() {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
+  // const handleDrawerOpen = () => {
+  //   setOpen(true);
+  // };
   const handleDrawerToggle = () => {
     setOpen((prevVal) => {
       return !prevVal;
     });
   };
+
+  const handleDrawerClose = ()=>{
+    setOpen(false);
+  }
 
   const drawer = (
     <>
@@ -144,7 +148,7 @@ export default function Dashboard() {
         </IconButton>
       </div>
       <Divider />
-      <List>{mainListItems}</List>
+      <List><MainListItems handleClick={handleDrawerClose}/></List>
       {/* <Divider />
       <List>{secondaryListItems}</List> */}
     </>
@@ -209,13 +213,16 @@ export default function Dashboard() {
               <Articles />
             </Route>
             <Route exact path="/articles/create">
-              <SingleArticle />
+              <ArticlesAddEdit />
             </Route>
             <Route path="/articles/:articleId">
-              <SingleArticle />
+              <ArticlesAddEdit />
             </Route>
             <Route path="/categories">
               <Categories />
+            </Route>
+            <Route path="/menu-master">
+              <MenuMaster />
             </Route>
           </Switch>
         </main>

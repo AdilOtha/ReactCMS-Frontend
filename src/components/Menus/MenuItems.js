@@ -8,137 +8,61 @@ import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import Checkbox from '@material-ui/core/Checkbox';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import axios from 'axios';
-import EnhancedTableHead from '../models/EnhancedTableHead';
-import EnhancedTableToolbar from '../models/EnhancedTableToolbar';
-import { getComparator, stableSort } from '../helpers/tableOperations';
-import EditIcon from '@material-ui/icons/Edit';
+import EnhancedTableHead from '../../models/EnhancedTableHead';
+import EnhancedTableToolbar from '../../models/EnhancedTableToolbar';
+import { getComparator, stableSort } from '../../helpers/tableOperations';
+import { Link, useRouteMatch } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
 
+import axios from 'axios';
 require('dotenv').config();
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        width: '100%',
-    },
-    container: {
-        marginTop: '1rem',
     },
     paper: {
         margin: 'auto',
         marginTop: '0.5rem',
-        width: '95%',
+        width: '100%',
         marginBottom: theme.spacing(2),
-    },
-    table: {
-        // minWidth: 750,
-    },
-    visuallyHidden: {
-        border: 0,
-        clip: 'rect(0 0 0 0)',
-        height: 1,
-        margin: -1,
-        overflow: 'hidden',
-        padding: 0,
-        position: 'absolute',
-        top: 20,
-        width: 1,
-    },
-    appBarSpacer: theme.mixins.toolbar,
+    },    
     dialogActions: {
         justifyContent: 'space-around',
     }
 }));
 
-export default function Categories() {
+export default function MenuItems() {
+    // The `path` lets us build <Route> paths that are
+    // relative to the parent route, while the `url` lets
+    // us build relative links.
+    let { url } = useRouteMatch();
     const classes = useStyles();
     const apiUrl = process.env.NODE_ENV === 'production' ? process.env.REACT_APP_PROD_API_URL : process.env.REACT_APP_DEV_API_URL;
 
-    const [order, setOrder] = React.useState('asc');
-    const [orderBy, setOrderBy] = React.useState('title');
-    const [selected, setSelected] = React.useState([]);
-    const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(5);
-    const [category, setCategory] = useState({ name: '', _id: null, datePosted: null });
-    const [categories, setCategories] = useState([]);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [isEdit, setIsEdit] = useState(false);
-
-    const loadCategories = () => {
-        axios.get(apiUrl + "/api/categories")
-            .then(res => {
-                console.log(res);
-                setCategories(res.data);
-            })
-            .catch(err => {
-                console.log(err);
-            });
-    }
+    const [order, setOrder] = useState('asc');
+    const [orderBy, setOrderBy] = useState('title');
+    const [selected, setSelected] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [menuItems, setMenuItems] = useState([]);
 
     useEffect(() => {
-        axios.get(apiUrl + "/api/categories")
+        axios.get(apiUrl + "/api/menu-items")
             .then(res => {
                 console.log(res);
-                setCategories(res.data);
+                setMenuItems(res.data);
             })
             .catch(err => {
                 console.log(err);
             });
-    }, [apiUrl]);
-
-    const saveCategory = async (event) => {
-        event.preventDefault();
-        console.log(category);
-        if (!category.name) {
-            return;
-        }
-        let apiPath = '';
-        if (isEdit) {
-            apiPath = '/api/categories/update/' + category._id;
-        } else {
-            apiPath = '/api/categories/insert';
-        }
-        try {
-            const body = {
-                name: category.name
-            }
-            const result = await axios.post(apiUrl + apiPath, body);
-            console.log(result);
-        } catch (err) {
-            console.log(err);
-        } finally {
-            setCategory({ name: '', _id: null, datePosted: null });
-            handleDialogCallback(false);
-            setIsEdit(false);
-            loadCategories();
-        }
-    }
-
-    const editCategory = (category) => {
-        setCategory(category);
-        setIsEdit(true);
-        handleDialogCallback(true);
-    }
+    }, [apiUrl]);    
 
     const headCells = [
         { id: 'name', numeric: false, disablePadding: false, label: 'Name' },
+        { id: 'type', numeric: false, disablePadding: false, label: 'Type' },
+        { id: 'menu', numeric: false, disablePadding: false, label: 'Menu' },
         { id: 'datePosted', numeric: true, disablePadding: false, label: 'Date Posted' },
-        { id: 'editBtn', numeric: false, disablePadding: false, label: 'Edit' },
     ];
-
-    const handleCategoryNameChange = (event) => {
-        setCategory({ ...category, name: event.target.value });
-    }
-
-    const handleDialogCallback = (value) => {
-        setDialogOpen(value);
-    }
 
     const handleRequestSort = (event, property) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -148,7 +72,7 @@ export default function Categories() {
 
     const handleSelectAllClick = (event) => {
         if (event.target.checked) {
-            const newSelecteds = categories.map((n) => n._id);
+            const newSelecteds = menuItems.map((n) => n._id);
             setSelected(newSelecteds);
             return;
         }
@@ -157,10 +81,10 @@ export default function Categories() {
 
     const onDeleteSelected = async () => {
         try {
-            await axios.post(apiUrl + "/api/categories/delete", {
-                categoryIds: selected
+            await axios.post(apiUrl + "/api/menu-items/delete", {
+                menuItemIds: selected
             });
-            if (selected.length >= (categories.length - page * rowsPerPage)) {
+            if (selected.length >= (menuItems.length - page * rowsPerPage)) {
                 setPage((prevVal) => {
                     console.log(prevVal);
                     let newVal = prevVal - Math.ceil(selected.length / rowsPerPage);
@@ -172,8 +96,8 @@ export default function Categories() {
                 });
             }
             setSelected([]);
-            const result2 = await axios.get(apiUrl + "/api/categories")
-            setCategories(result2.data);
+            const result2 = await axios.get(apiUrl + "/api/menu-items")
+            setMenuItems(result2.data);
         } catch (err) {
             console.log(err);
         }
@@ -210,57 +134,23 @@ export default function Categories() {
 
     const isSelected = (name) => selected.indexOf(name) !== -1;
 
-    const emptyRows = rowsPerPage - Math.min(rowsPerPage, categories.length - page * rowsPerPage);
+    const emptyRows = rowsPerPage - Math.min(rowsPerPage, menuItems.length - page * rowsPerPage);
 
     return (
         <>
-            <div className={classes.appBarSpacer} />
-            <Grid container justify="center" alignItems="center" className={classes.container}>
+            <Grid container justify="center">
                 <Grid item xs={12} md={6}>
                     <div className={classes.root}>
                         <Paper className={classes.paper}>
                             <EnhancedTableToolbar
                                 numSelected={selected.length}
                                 onDeleteSelected={onDeleteSelected}
-                                title="Your Categories"
-                                dialogCallback={handleDialogCallback}
-                                isCategoryPage={true}
+                                title="Your Menu Items"
+                                isMenuItemPage={true}
+                                addButtonRoute={`${url}/create`}
                             />
-                            <Dialog open={dialogOpen} onClose={() => { handleDialogCallback(false) }} aria-labelledby="form-dialog-title">
-                                <form onSubmit={saveCategory}>
-                                    <DialogTitle id="form-dialog-title">Add New Category</DialogTitle>
-                                    <DialogContent>
-                                        {isEdit ? (<TextField
-                                            autoFocus
-                                            id="categoryName"
-                                            label="Name"
-                                            type="text"
-                                            fullWidth
-                                            onChange={handleCategoryNameChange}
-                                            value={category.name || ''}
-                                        />) : (<TextField
-                                            autoFocus
-                                            id="categoryName"
-                                            label="Name"
-                                            type="text"
-                                            fullWidth
-                                            onChange={handleCategoryNameChange}
-                                            value={category.name}
-                                        />)}
-                                    </DialogContent>
-                                    <DialogActions className={classes.dialogActions}>
-                                        <Button onClick={() => { handleDialogCallback(false); setIsEdit(false); }} color="secondary">
-                                            Cancel
-                                        </Button>
-                                        <Button type="submit" color="primary">
-                                            Save
-                                        </Button>
-                                    </DialogActions>
-                                </form>
-                            </Dialog>
                             <TableContainer>
                                 <Table
-                                    className={classes.table}
                                     aria-labelledby="tableTitle"
                                     size={'medium'}
                                     aria-label="enhanced table"
@@ -272,11 +162,11 @@ export default function Categories() {
                                         orderBy={orderBy}
                                         onSelectAllClick={handleSelectAllClick}
                                         onRequestSort={handleRequestSort}
-                                        rowCount={categories.length}
+                                        rowCount={menuItems.length}
                                         headCells={headCells}
                                     />
                                     <TableBody>
-                                        {stableSort(categories, getComparator(order, orderBy))
+                                        {stableSort(menuItems, getComparator(order, orderBy))
                                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                             .map((row, index) => {
                                                 const isItemSelected = isSelected(row._id);
@@ -300,14 +190,13 @@ export default function Categories() {
                                                             />
                                                         </TableCell>
                                                         <TableCell component="th" id={labelId} scope="row" padding="none">
-                                                            {row.name}
+                                                            <Link to={`${url}/create/${row._id}`}>
+                                                                {row.name}
+                                                            </Link>
                                                         </TableCell>
-                                                        <TableCell align="right">{row.datePosted && new Date(row.datePosted).toLocaleDateString("en-IN")}</TableCell>
-                                                        <TableCell align="left">
-                                                            <Button variant="outlined" onClick={() => editCategory(row)}>
-                                                                <EditIcon fontSize="small" />
-                                                            </Button>
-                                                        </TableCell>
+                                                        <TableCell align="left">{row.typeArticle ? (`Article: ${row.typeArticle.title}`) : (row.typeCategory ? (`Category: ${row.typeCategory.name}`) : ('None'))}</TableCell>
+                                                        <TableCell align="left">{(row.menuIds.length>0) ? (row.menuIds[0].name) : ('None')}</TableCell>
+                                                        <TableCell align="right">{row.datePosted && new Date(row.datePosted).toLocaleDateString("en-IN")}</TableCell>                                                        
                                                     </TableRow>
                                                 );
                                             })}
@@ -322,7 +211,7 @@ export default function Categories() {
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25]}
                                 component="div"
-                                count={categories.length}
+                                count={menuItems.length}
                                 rowsPerPage={rowsPerPage}
                                 page={page}
                                 onChangePage={handleChangePage}

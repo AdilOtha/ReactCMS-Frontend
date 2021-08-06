@@ -9,31 +9,38 @@ import BookIcon from '@material-ui/icons/Book';
 import AppsIcon from '@material-ui/icons/Apps';
 import { Link } from 'react-router-dom';
 
-export const mainListItems = (
-  <div>
-    <Link to="/articles" style={{ textDecoration: 'none' }}>
-      <ListItem button>
-        <ListItemIcon>
-          <BookIcon />
-        </ListItemIcon>
-        <ListItemText primary="Articles" />
-      </ListItem>
-    </Link>
-    <Link to="/categories" style={{ textDecoration: 'none' }}>
-      <ListItem button>
-        <ListItemIcon>
-          <CategoryIcon />
-        </ListItemIcon>
-        <ListItemText primary="Categories" />
-      </ListItem></Link>
-    <ListItem button>
-      <ListItemIcon>
-        <AppsIcon />
-      </ListItemIcon>
-      <ListItemText primary="Menus" />
-    </ListItem>
-  </div>
-);
+export const MainListItems = (props) => {
+  const { handleClick } = props;
+  return (
+    <>
+      <div>
+        <Link to="/articles" style={{ textDecoration: 'none' }} onClick={handleClick}>
+          <ListItem button>
+            <ListItemIcon>
+              <BookIcon />
+            </ListItemIcon>
+            <ListItemText primary="Articles" />
+          </ListItem>
+        </Link>
+        <Link to="/categories" style={{ textDecoration: 'none' }} onClick={handleClick}>
+          <ListItem button>
+            <ListItemIcon>
+              <CategoryIcon />
+            </ListItemIcon>
+            <ListItemText primary="Categories" />
+          </ListItem></Link>
+        <Link to="/menu-master" style={{ textDecoration: 'none' }} onClick={handleClick}>
+          <ListItem button>
+            <ListItemIcon>
+              <AppsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Menus" />
+          </ListItem>
+        </Link>
+      </div>
+    </>
+  );
+}
 
 export const secondaryListItems = (
   <div>
