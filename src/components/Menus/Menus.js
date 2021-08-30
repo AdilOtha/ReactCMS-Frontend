@@ -16,7 +16,7 @@ import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import EditIcon from '@material-ui/icons/Edit';
 
-import axios from 'axios';
+import axios from '../../interceptors/auth.interceptor';;
 require('dotenv').config();
 
 const useStyles = makeStyles((theme) => ({
@@ -27,10 +27,21 @@ const useStyles = makeStyles((theme) => ({
         marginTop: '0.5rem',
         width: '100%',
         marginBottom: theme.spacing(2),
-    },    
+    },
     dialogActions: {
         justifyContent: 'space-around',
-    }
+    },
+    visuallyHidden: {
+        border: 0,
+        clip: 'rect(0 0 0 0)',
+        height: 1,
+        margin: -1,
+        overflow: 'hidden',
+        padding: 0,
+        position: 'absolute',
+        top: 20,
+        width: 1,
+    },
 }));
 
 export default function Menus() {
@@ -57,7 +68,7 @@ export default function Menus() {
             .catch(err => {
                 console.log(err);
             });
-    }, [apiUrl]);    
+    }, [apiUrl]);
 
     const headCells = [
         { id: 'name', numeric: false, disablePadding: false, label: 'Name' },
@@ -191,7 +202,7 @@ export default function Menus() {
                                                             />
                                                         </TableCell>
                                                         <TableCell component="th" id={labelId} scope="row" padding="none">
-                                                            <Link to={`menu-master/menu-items?menuId=${row._id}`}>
+                                                            <Link to={`menu-items?menuId=${row._id}`}>
                                                                 {row.name}
                                                             </Link>
                                                         </TableCell>

@@ -8,24 +8,26 @@ import List from '@material-ui/core/List';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
-import Badge from '@material-ui/core/Badge';
+// import Badge from '@material-ui/core/Badge';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import NotificationsIcon from '@material-ui/icons/Notifications';
-import {MainListItems} from '../models/SidebarItems';
+import { Button } from '@material-ui/core';
+// import NotificationsIcon from '@material-ui/icons/Notifications';
+import { MainListItems } from '../models/SidebarItems';
 import clsx from 'clsx';
 import Hidden from '@material-ui/core/Hidden';
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Redirect
+  Redirect,
 } from "react-router-dom";
 
 import Articles from './Articles/Articles';
 import ArticlesAddEdit from './Articles/ArticlesAddEdit';
 import Categories from './Categories';
 import MenuMaster from './Menus/MenuMaster';
+import auth from '../models/Auth';
 
 require('dotenv').config();
 
@@ -83,6 +85,7 @@ const useStyles = makeStyles((theme) => ({
     flexGrow: 1,
   },
   drawerPaper: {
+    height: "100vh",
     position: 'relative',
     whiteSpace: 'nowrap',
     width: drawerWidth,
@@ -124,7 +127,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Dashboard() {
+export default function Dashboard(props) {
   const classes = useStyles();
   const [open, setOpen] = React.useState(false);
   // const handleDrawerOpen = () => {
@@ -136,8 +139,15 @@ export default function Dashboard() {
     });
   };
 
-  const handleDrawerClose = ()=>{
+  const handleDrawerClose = () => {
     setOpen(false);
+  }
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    auth.logout(()=>{
+      props.history.push('/');
+    });
   }
 
   const drawer = (
@@ -148,7 +158,7 @@ export default function Dashboard() {
         </IconButton>
       </div>
       <Divider />
-      <List><MainListItems handleClick={handleDrawerClose}/></List>
+      <List><MainListItems handleClick={handleDrawerClose} /></List>
       {/* <Divider />
       <List>{secondaryListItems}</List> */}
     </>
@@ -170,13 +180,14 @@ export default function Dashboard() {
               <MenuIcon />
             </IconButton>
             <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-              Dashboard
+              Control Panel
             </Typography>
-            <IconButton color="inherit">
+            <Button onClick={logout} variant="contained" color="default">Logout</Button>
+            {/* <IconButton color="inherit">
               <Badge badgeContent={4} color="secondary">
                 <NotificationsIcon />
               </Badge>
-            </IconButton>
+            </IconButton> */}
           </Toolbar>
         </AppBar>
         <Hidden smUp implementation="css">
@@ -206,24 +217,27 @@ export default function Dashboard() {
         </Hidden>
         <main className={classes.content}>
           <Switch>
-            <Route exact path="/">
-              <Redirect to="/articles" />
+            <Route exact path={'/dashboard'}>
+              <Redirect to={`/dashboard/articles`} />
             </Route>
-            <Route exact path="/articles">
+            <Route exact path={`/dashboard/articles`}>
               <Articles />
             </Route>
-            <Route exact path="/articles/create">
+            <Route exact path={`/dashboard/articles/create`}>
               <ArticlesAddEdit />
             </Route>
-            <Route path="/articles/:articleId">
+            <Route path={`/dashboard/articles/:articleId`}>
               <ArticlesAddEdit />
             </Route>
-            <Route path="/categories">
+            <Route path={`/dashboard/categories`}>
               <Categories />
             </Route>
-            <Route path="/menu-master">
+            <Route path={`/dashboard/menu-master`}>
               <MenuMaster />
             </Route>
+            {/* <Route path="/auth">
+              <Auth />
+            </Route> */}
           </Switch>
         </main>
       </Router>

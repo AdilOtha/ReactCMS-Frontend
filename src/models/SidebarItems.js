@@ -14,7 +14,7 @@ export const MainListItems = (props) => {
   return (
     <>
       <div>
-        <Link to="/articles" style={{ textDecoration: 'none' }} onClick={handleClick}>
+        <Link to="/dashboard/articles" style={{ textDecoration: 'none' }} onClick={handleClick}>
           <ListItem button>
             <ListItemIcon>
               <BookIcon />
@@ -22,14 +22,14 @@ export const MainListItems = (props) => {
             <ListItemText primary="Articles" />
           </ListItem>
         </Link>
-        <Link to="/categories" style={{ textDecoration: 'none' }} onClick={handleClick}>
+        <Link to="/dashboard/categories" style={{ textDecoration: 'none' }} onClick={handleClick}>
           <ListItem button>
             <ListItemIcon>
               <CategoryIcon />
             </ListItemIcon>
             <ListItemText primary="Categories" />
           </ListItem></Link>
-        <Link to="/menu-master" style={{ textDecoration: 'none' }} onClick={handleClick}>
+        <Link to="/dashboard/menu-master" style={{ textDecoration: 'none' }} onClick={handleClick}>
           <ListItem button>
             <ListItemIcon>
               <AppsIcon />

@@ -6,7 +6,9 @@ import Grid from '@material-ui/core/Grid';
 import Switch from '@material-ui/core/Switch';
 import Button from '@material-ui/core/Button';
 import { Editor } from "react-draft-wysiwyg";
-import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
+import { convertFromRaw, convertToRaw, EditorState, Modifier } from 'draft-js';
+import { getSelectedBlock } from "draftjs-utils";
+import { stateFromHTML } from 'draft-js-import-html';
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import { Link, useHistory } from 'react-router-dom';
 import Paper from '@material-ui/core/Paper';
@@ -18,7 +20,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
-import axios from 'axios';
+import axios from '../../interceptors/auth.interceptor';
 require('dotenv').config();
 
 const useStyles = makeStyles((theme) => (
@@ -108,9 +110,42 @@ export default function ArticlesAddEdit() {
   };
 
   const handleSelectedCategoryChange = (event) => {
-    console.log(event.target.value)
-    setSelectedCategory(event.target.value);
+    let flag = true;
+    let newArray = event.target.value;
+    let latestVal = newArray[newArray.length - 1];
+    selectedCategory.forEach((value) => {
+      if (value._id === latestVal._id) {
+        flag = false;
+      }
+    });
+    if (flag) {
+      setSelectedCategory(event.target.value);
+    }
   }
+
+  const handlePastedText = (text, html, editorState, onChange) => {
+    const selectedBlock = getSelectedBlock(editorState);
+    if (selectedBlock && selectedBlock.type === 'code') {
+      const contentState = Modifier.replaceText(
+        editorState.getCurrentContent(),
+        editorState.getSelection(),
+        text,
+        editorState.getCurrentInlineStyle(),
+      );
+      onChange(EditorState.push(editorState, contentState, 'insert-characters'));
+      return true;
+    } else if (html) {
+      const blockMap = stateFromHTML(html).blockMap;
+      const newState = Modifier.replaceWithFragment(
+        editorState.getCurrentContent(),
+        editorState.getSelection(),
+        blockMap,
+      );
+      onChange(EditorState.push(editorState, newState, 'insert-fragment'));
+      return true;
+    }
+    return false;
+  };
 
   const saveArticle = async (event) => {
     event.preventDefault();
@@ -119,7 +154,7 @@ export default function ArticlesAddEdit() {
     let apiPath = '';
     let categoryIds = selectedCategory.map((category) => {
       console.log(category);
-      return category._id
+      return category._id;
     });
     const body = {
       title: title,
@@ -127,7 +162,7 @@ export default function ArticlesAddEdit() {
       published,
       categoryIds,
       userId: "60e1ca28a452c928d898d85e",
-    }
+    };
     console.log(body);
     if (articleId) {
       apiPath = '/api/articles/update/' + articleId;
@@ -137,7 +172,7 @@ export default function ArticlesAddEdit() {
     try {
       const result = await axios.post(apiUrl + apiPath, body);
       console.log(result);
-      history.push('/articles');
+      history.push('../articles');
     } catch (err) {
       console.log(err);
     }
@@ -151,8 +186,10 @@ export default function ArticlesAddEdit() {
           setTitle(res.data.title);
           setPublished(res.data.published);
           setSelectedCategory(res.data.categoryIds);
-          if (res.data.body !== null && !res.data.body.hasOwnProperty('entityMap')) {
-            res.data.body = { ...res.data.body, entityMap: {} };
+          if (res.data.body !== null) {
+            if (!res.data.body.hasOwnProperty('entityMap')) {
+              res.data.body = { ...res.data.body, entityMap: {} };
+            }
             const _contentState = convertFromRaw(res.data.body);
             console.log(_contentState);
             setEditorState(EditorState.createWithContent(_contentState));
@@ -242,6 +279,7 @@ export default function ArticlesAddEdit() {
                     {articleId ? (editorState && (<Editor
                       editorState={editorState}
                       onEditorStateChange={handleEditorChange}
+                      handlePastedText={handlePastedText}
                       toolbarClassName="toolbarClassName"
                       wrapperClassName="wrapperClassName"
                       editorStyle={editorStyles}
@@ -253,6 +291,7 @@ export default function ArticlesAddEdit() {
                       wrapperClassName="wrapperClassName"
                       editorStyle={editorStyles}
                       toolbarStyle={toolbarStyles}
+                      handlePastedText={handlePastedText}
                     />)}
                   </Grid>
                 </Grid>
@@ -264,7 +303,7 @@ export default function ArticlesAddEdit() {
                     </Button>
                   </Grid>
                   <Grid item>
-                    <Link to={"/articles"} style={{ textDecoration: 'none' }}>
+                    <Link to={"../articles"} style={{ textDecoration: 'none' }}>
                       <Button variant="contained">
                         Cancel
                       </Button>

@@ -14,7 +14,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
-import axios from 'axios';
+import axios from '../interceptors/auth.interceptor';
 import EnhancedTableHead from '../models/EnhancedTableHead';
 import EnhancedTableToolbar from '../models/EnhancedTableToolbar';
 import { getComparator, stableSort } from '../helpers/tableOperations';

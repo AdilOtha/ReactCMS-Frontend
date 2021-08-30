@@ -16,12 +16,12 @@ export default function EnhancedTableHead(props) {
         <TableHead>
             <TableRow>
                 <TableCell padding="checkbox">
-                    <Checkbox
+                    {/* <Checkbox
                         indeterminate={numSelected > 0 && numSelected < rowCount}
                         checked={rowCount > 0 && numSelected === rowCount}
                         onChange={onSelectAllClick}
-                        inputProps={{ 'aria-label': 'select all articles' }}
-                    />
+                        inputProps={{ 'aria-label': 'select all' }}
+                    /> */}
                 </TableCell>
                 {headCells.map((headCell) => (
                     <TableCell

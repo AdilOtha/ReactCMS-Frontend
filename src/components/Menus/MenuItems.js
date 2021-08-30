@@ -11,10 +11,10 @@ import Checkbox from '@material-ui/core/Checkbox';
 import EnhancedTableHead from '../../models/EnhancedTableHead';
 import EnhancedTableToolbar from '../../models/EnhancedTableToolbar';
 import { getComparator, stableSort } from '../../helpers/tableOperations';
-import { Link, useRouteMatch } from 'react-router-dom';
+import { Link, useRouteMatch, useLocation } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
 
-import axios from 'axios';
+import axios from '../../interceptors/auth.interceptor';
 require('dotenv').config();
 
 const useStyles = makeStyles((theme) => ({
@@ -25,10 +25,21 @@ const useStyles = makeStyles((theme) => ({
         marginTop: '0.5rem',
         width: '100%',
         marginBottom: theme.spacing(2),
-    },    
+    },
     dialogActions: {
         justifyContent: 'space-around',
-    }
+    },
+    visuallyHidden: {
+        border: 0,
+        clip: 'rect(0 0 0 0)',
+        height: 1,
+        margin: -1,
+        overflow: 'hidden',
+        padding: 0,
+        position: 'absolute',
+        top: 20,
+        width: 1,
+    },
 }));
 
 export default function MenuItems() {
@@ -36,6 +47,7 @@ export default function MenuItems() {
     // relative to the parent route, while the `url` lets
     // us build relative links.
     let { url } = useRouteMatch();
+    const query = new URLSearchParams(useLocation().search);
     const classes = useStyles();
     const apiUrl = process.env.NODE_ENV === 'production' ? process.env.REACT_APP_PROD_API_URL : process.env.REACT_APP_DEV_API_URL;
 
@@ -47,15 +59,26 @@ export default function MenuItems() {
     const [menuItems, setMenuItems] = useState([]);
 
     useEffect(() => {
-        axios.get(apiUrl + "/api/menu-items")
-            .then(res => {
-                console.log(res);
-                setMenuItems(res.data);
-            })
-            .catch(err => {
-                console.log(err);
-            });
-    }, [apiUrl]);    
+        if (query.get("menuId")) {
+            axios.get(apiUrl + `/api/menu-items?menuId=${query.get("menuId")}`)
+                .then(res => {
+                    console.log(res);
+                    setMenuItems(res.data);
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        } else {
+            axios.get(apiUrl + "/api/menu-items")
+                .then(res => {
+                    console.log(res);
+                    setMenuItems(res.data);
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+    }, [apiUrl]);
 
     const headCells = [
         { id: 'name', numeric: false, disablePadding: false, label: 'Name' },
@@ -96,7 +119,7 @@ export default function MenuItems() {
                 });
             }
             setSelected([]);
-            const result2 = await axios.get(apiUrl + "/api/menu-items")
+            const result2 = await axios.get(apiUrl + "/api/menu-items");
             setMenuItems(result2.data);
         } catch (err) {
             console.log(err);
@@ -195,8 +218,8 @@ export default function MenuItems() {
                                                             </Link>
                                                         </TableCell>
                                                         <TableCell align="left">{row.typeArticle ? (`Article: ${row.typeArticle.title}`) : (row.typeCategory ? (`Category: ${row.typeCategory.name}`) : ('None'))}</TableCell>
-                                                        <TableCell align="left">{(row.menuIds.length>0) ? (row.menuIds[0].name) : ('None')}</TableCell>
-                                                        <TableCell align="right">{row.datePosted && new Date(row.datePosted).toLocaleDateString("en-IN")}</TableCell>                                                        
+                                                        <TableCell align="left">{(row.menuIds.length > 0) ? (row.menuIds[0].name) : ('None')}</TableCell>
+                                                        <TableCell align="right">{row.datePosted && new Date(row.datePosted).toLocaleDateString("en-IN")}</TableCell>
                                                     </TableRow>
                                                 );
                                             })}

@@ -5,9 +5,12 @@ import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import Switch from '@material-ui/core/Switch';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Typography from '@material-ui/core/Typography';
 import { Link, useParams, useHistory } from 'react-router-dom';
 
-import axios from 'axios';
+import axios from '../../interceptors/auth.interceptor';;
 require('dotenv').config();
 
 const useStyles = makeStyles((theme) => (
@@ -34,10 +37,7 @@ export default function MenusAddEdit() {
 
     const [saving, setSaving] = useState(false);
     const [name, setName] = useState('');
-
-    // if (menuId) {
-    //     setIsEdit(true);
-    // }
+    const [isMainMenu, setIsMainMenu] = useState(false);
 
     useEffect(() => {
         if (menuId) {
@@ -45,6 +45,18 @@ export default function MenusAddEdit() {
                 .then(res => {
                     console.log(res);
                     setName(res.data.name);
+                    axios.get(apiUrl + "/api/main-menu")
+                        .then((res) => {
+                            console.log(res)
+                            if(res.data.menuId === menuId) {
+                                setIsMainMenu(true);
+                            } else {
+                                setIsMainMenu(false);
+                            }                        
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                        });
                 })
                 .catch(err => {
                     console.log(err);
@@ -61,18 +73,19 @@ export default function MenusAddEdit() {
         setSaving(true);
         let apiPath = '';
         const body = {
-            name: name
-        }
-        if (menuId) {
-            apiPath = '/api/menus/update/' + menuId;
-        } else {
-            apiPath = '/api/menus/insert';
-        }
+            name
+        }        
+        apiPath = menuId ? ('/api/menus/update/' + menuId) : ('/api/menus/insert');
         try {
             const result = await axios.post(apiUrl + apiPath, body);
             console.log(result);
+            if(isMainMenu) {
+                let body2 = menuId ? {menuId} : {menuId: result._id};
+                const result2 = await axios.post(apiUrl + '/api/main-menu', body2);
+                console.log(result2);
+            }
             setSaving(false);
-            history.push('/menu-master/menus');
+            history.push('/dashboard/menu-master/menus');
         } catch (err) {
             console.log(err);
         }
@@ -85,20 +98,39 @@ export default function MenusAddEdit() {
                     <Paper className={classes.paper} elevation={3} >
                         <Grid container justify="center">
                             <Grid item sm={6}>
-                                {menuId ? (<TextField margin="dense" fullWidth={true} id="outlined-basic" label="Name" variant="outlined" onChange={(event)=>handleNameChange(event)}
+                                {menuId ? (<TextField margin="dense" fullWidth={true} id="outlined-basic" label="Name" variant="outlined" onChange={(event) => handleNameChange(event)}
                                     value={name || ''} />)
-                                    : (<TextField margin="dense" fullWidth={true} id="outlined-basic" label="Name" variant="outlined" onChange={(event)=>handleNameChange(event)} />)}
+                                    : (<TextField margin="dense" fullWidth={true} id="outlined-basic" label="Name" variant="outlined" onChange={(event) => handleNameChange(event)} />)}
                             </Grid>
                         </Grid>
+                        <Grid container justify="center">
+                            {isMainMenu ? (<Typography variant={"h6"}>
+                                Currently set as Main Menu
+                            </Typography>) : (<FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={isMainMenu}
+                                        onChange={(event) => {
+                                            setIsMainMenu((prevVal) => {
+                                                return !prevVal;
+                                            });
+                                        }}
+                                        name="isMainMenu"
+                                        color="primary"
+                                    />
+                                }
+                                label="Set as Main Menu"
+                            />)}
+                        </Grid>
                         <br />
-                        <Grid container>
-                            <Grid item xs={6}>
+                        <Grid container justify="space-evenly">
+                            <Grid item>
                                 <Button type="submit" variant="contained" color="primary" disabled={saving}>
                                     Save
                                 </Button>
                             </Grid>
-                            <Grid item xs={6}>
-                                <Link to="/menu-master/menus" style={{ textDecoration: 'none' }}>
+                            <Grid item>
+                                <Link to="/dashboard/menu-master/menus" style={{ textDecoration: 'none' }}>
                                     <Button variant="contained">
                                         Cancel
                                     </Button>
