@@ -161,7 +161,7 @@ export default function ArticlesAddEdit() {
       body: convertedContent,
       published,
       categoryIds,
-      userId: "60e1ca28a452c928d898d85e",
+      // userId: "60e1ca28a452c928d898d85e",
     };
     console.log(body);
     if (articleId) {
