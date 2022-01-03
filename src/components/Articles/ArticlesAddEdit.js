@@ -178,19 +178,44 @@ export default function ArticlesAddEdit() {
     }
   }
 
+  const uploadImageCallBack = (file) => {
+    return new Promise(
+      (resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://api.imgur.com/3/image');
+        xhr.setRequestHeader('Authorization', 'Client-ID bcce8b1c141c214');
+        const data = new FormData();
+        data.append('image', file);
+        xhr.send(data);
+        xhr.addEventListener('load', () => {
+          const response = JSON.parse(xhr.responseText);
+          console.log(response)
+          resolve(response);
+        });
+        xhr.addEventListener('error', () => {
+          console.log(xhr.responseText);
+          const error = JSON.parse(xhr.responseText);
+          console.log(error)
+          reject(error);
+        });
+      }
+    );
+  }
+
   useEffect(() => {
     if (articleId) {
       axios.get(apiUrl + "/api/articles/" + articleId)
         .then(res => {
           console.log(res);
-          setTitle(res.data.title);
-          setPublished(res.data.published);
-          setSelectedCategory(res.data.categoryIds);
-          if (res.data.body !== null) {
-            if (!res.data.body.hasOwnProperty('entityMap')) {
-              res.data.body = { ...res.data.body, entityMap: {} };
+          const data = res.data[0];
+          setTitle(data.title);
+          setPublished(data.published);
+          setSelectedCategory(data.categoryIds);
+          if (data.body !== null) {
+            if (!data.body.hasOwnProperty('entityMap')) {
+              data.body = { ...data.body, entityMap: {} };
             }
-            const _contentState = convertFromRaw(res.data.body);
+            const _contentState = convertFromRaw(data.body);
             console.log(_contentState);
             setEditorState(EditorState.createWithContent(_contentState));
           }
@@ -232,7 +257,7 @@ export default function ArticlesAddEdit() {
                 <br />
                 <Grid container spacing={3} alignItems="center">
                   <Grid item xs={12} md={7}>
-                    <FormControl className={classes.formControl} fullWidth>
+                    {categories.length!==0 && <FormControl className={classes.formControl} fullWidth>
                       <InputLabel id="demo-mutiple-chip-label">Categories</InputLabel>
                       <Select
                         labelId="demo-mutiple-chip-label"
@@ -255,7 +280,7 @@ export default function ArticlesAddEdit() {
                           </MenuItem>
                         ))}
                       </Select>
-                    </FormControl>
+                    </FormControl>}
                   </Grid>
                   <Grid item xs={12} md={5}>
                     <Grid item>
@@ -284,14 +309,20 @@ export default function ArticlesAddEdit() {
                       wrapperClassName="wrapperClassName"
                       editorStyle={editorStyles}
                       toolbarStyle={toolbarStyles}
+                      toolbar={
+                        {image: {uploadCallback: uploadImageCallBack, alt: { present: true, mandatory: false }}}
+                      }
                     />)) : (<Editor
                       editorState={editorState}
                       onEditorStateChange={handleEditorChange}
+                      handlePastedText={handlePastedText}
                       toolbarClassName="toolbarClassName"
                       wrapperClassName="wrapperClassName"
                       editorStyle={editorStyles}
                       toolbarStyle={toolbarStyles}
-                      handlePastedText={handlePastedText}
+                      toolbar={
+                        {image: {uploadCallback: uploadImageCallBack, alt: { present: true, mandatory: false }}}
+                      }
                     />)}
                   </Grid>
                 </Grid>
