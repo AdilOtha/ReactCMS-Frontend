@@ -1,76 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { useParams } from 'react-router-dom';
-import TextField from '@material-ui/core/TextField';
-import Grid from '@material-ui/core/Grid';
-import Switch from '@material-ui/core/Switch';
-import Button from '@material-ui/core/Button';
+import React, { useState, useEffect } from "react";
+import { makeStyles } from "@material-ui/core/styles";
+import { useParams } from "react-router-dom";
+import TextField from "@material-ui/core/TextField";
+import Grid from "@material-ui/core/Grid";
+import Switch from "@material-ui/core/Switch";
+import Button from "@material-ui/core/Button";
 import { Editor } from "react-draft-wysiwyg";
-import { convertFromRaw, convertToRaw, EditorState, Modifier } from 'draft-js';
+import { convertFromRaw, convertToRaw, EditorState, Modifier } from "draft-js";
 import { getSelectedBlock } from "draftjs-utils";
-import { stateFromHTML } from 'draft-js-import-html';
+import { stateFromHTML } from "draft-js-import-html";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
-import { Link, useHistory } from 'react-router-dom';
-import Paper from '@material-ui/core/Paper';
-import Input from '@material-ui/core/Input';
-import InputLabel from '@material-ui/core/InputLabel';
-import Select from '@material-ui/core/Select';
-import Chip from '@material-ui/core/Chip';
-import MenuItem from '@material-ui/core/MenuItem';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
+import { Link, useHistory } from "react-router-dom";
+import Paper from "@material-ui/core/Paper";
+import Input from "@material-ui/core/Input";
+import InputLabel from "@material-ui/core/InputLabel";
+import Select from "@material-ui/core/Select";
+import Chip from "@material-ui/core/Chip";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormControl from "@material-ui/core/FormControl";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
 
-import axios from '../../interceptors/auth.interceptor';
-require('dotenv').config();
+import firebase from "../../helpers/firebase";
+import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "firebase/storage";
+import axios from "../../interceptors/auth.interceptor";
+require("dotenv").config();
 
-const useStyles = makeStyles((theme) => (
-  {
-    appBarSpacer: theme.mixins.toolbar,
-    root: {
-      height: '90vh',
-    },
-    container: {
-      marginTop: '1rem',
-    },
-    paper: {
-      backgroundColor: 'lightGrey',
-      margin: 'auto',
-      marginTop: '0.5rem',
-      width: '100%',
-      marginBottom: theme.spacing(2),
-      padding: '1rem',
-    },
-    innerContainer: {
-      padding: '1rem',
-    },
-    formControl: {
-      // margin: theme.spacing(1),
-      // minWidth: 120,
-      // maxWidth: 300,
-    },
-    chips: {
-      display: 'flex',
-      flexWrap: 'wrap',
-    },
-    chip: {
-      margin: 2,
-    },
-  }
-));
+const useStyles = makeStyles((theme) => ({
+  appBarSpacer: theme.mixins.toolbar,
+  root: {
+    height: "90vh",
+  },
+  container: {
+    marginTop: "1rem",
+  },
+  paper: {
+    backgroundColor: "lightGrey",
+    margin: "auto",
+    marginTop: "0.5rem",
+    width: "100%",
+    marginBottom: theme.spacing(2),
+    padding: "1rem",
+  },
+  innerContainer: {
+    padding: "1rem",
+  },
+  formControl: {
+    // margin: theme.spacing(1),
+    // minWidth: 120,
+    // maxWidth: 300,
+  },
+  chips: {
+    display: "flex",
+    flexWrap: "wrap",
+  },
+  chip: {
+    margin: 2,
+  },
+}));
 
 const editorStyles = {
-  backgroundColor: '#fff',
-  minHeight: '20rem',
-  marginBottom: '1rem',
-  border: '1px solid grey',
-  borderRadius: '5px'
-}
+  backgroundColor: "#fff",
+  minHeight: "20rem",
+  marginBottom: "1rem",
+  border: "1px solid grey",
+  borderRadius: "5px",
+};
 
 const toolbarStyles = {
-  border: '1px solid grey',
-  borderRadius: '5px',
-  marginTop: '1rem'
-}
+  border: "1px solid grey",
+  borderRadius: "5px",
+  marginTop: "1rem",
+};
 
 export default function ArticlesAddEdit() {
   const history = useHistory();
@@ -78,11 +78,14 @@ export default function ArticlesAddEdit() {
   let { articleId } = useParams();
   // console.log({articleId});
 
-  const apiUrl = process.env.NODE_ENV === 'production' ? process.env.REACT_APP_PROD_API_URL : process.env.REACT_APP_DEV_API_URL;
+  const apiUrl =
+    process.env.NODE_ENV === "production"
+      ? process.env.REACT_APP_PROD_API_URL
+      : process.env.REACT_APP_DEV_API_URL;
 
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
 
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState("");
 
   const [saving, setSaving] = useState(false);
 
@@ -96,12 +99,12 @@ export default function ArticlesAddEdit() {
 
   const handleTitleChange = (event) => {
     setTitle(event.target.value);
-  }
+  };
 
   const handleEditorChange = (state) => {
     setEditorState(state);
     setConvertedContent(convertToRaw(state.getCurrentContent()));
-  }
+  };
 
   const handlePublishedChange = (event) => {
     setPublished((prevVal) => {
@@ -121,27 +124,29 @@ export default function ArticlesAddEdit() {
     if (flag) {
       setSelectedCategory(event.target.value);
     }
-  }
+  };
 
   const handlePastedText = (text, html, editorState, onChange) => {
     const selectedBlock = getSelectedBlock(editorState);
-    if (selectedBlock && selectedBlock.type === 'code') {
+    if (selectedBlock && selectedBlock.type === "code") {
       const contentState = Modifier.replaceText(
         editorState.getCurrentContent(),
         editorState.getSelection(),
         text,
-        editorState.getCurrentInlineStyle(),
+        editorState.getCurrentInlineStyle()
       );
-      onChange(EditorState.push(editorState, contentState, 'insert-characters'));
+      onChange(
+        EditorState.push(editorState, contentState, "insert-characters")
+      );
       return true;
     } else if (html) {
       const blockMap = stateFromHTML(html).blockMap;
       const newState = Modifier.replaceWithFragment(
         editorState.getCurrentContent(),
         editorState.getSelection(),
-        blockMap,
+        blockMap
       );
-      onChange(EditorState.push(editorState, newState, 'insert-fragment'));
+      onChange(EditorState.push(editorState, newState, "insert-fragment"));
       return true;
     }
     return false;
@@ -151,7 +156,7 @@ export default function ArticlesAddEdit() {
     event.preventDefault();
     setSaving(true);
     // console.log({ title, convertedContent, published, selectedCategory });
-    let apiPath = '';
+    let apiPath = "";
     let categoryIds = selectedCategory.map((category) => {
       console.log(category);
       return category._id;
@@ -165,54 +170,76 @@ export default function ArticlesAddEdit() {
     };
     console.log(body);
     if (articleId) {
-      apiPath = '/api/articles/update/' + articleId;
+      apiPath = "/api/articles/update/" + articleId;
     } else {
-      apiPath = '/api/articles/insert';
+      apiPath = "/api/articles/insert";
     }
     try {
       const result = await axios.post(apiUrl + apiPath, body);
       console.log(result);
-      history.push('../articles');
+      history.push("../articles");
     } catch (err) {
       console.log(err);
     }
-  }
+  };
 
   const uploadImageCallBack = (file) => {
-    return new Promise(
-      (resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://api.imgur.com/3/image');
-        xhr.setRequestHeader('Authorization', 'Client-ID bcce8b1c141c214');
-        const data = new FormData();
-        data.append('image', file);
-        xhr.send(data);
-        xhr.addEventListener('load', () => {
-          const response = JSON.parse(xhr.responseText);
-          console.log(response)
-          resolve(response);
-        });
-        xhr.addEventListener('error', () => {
-          console.log(xhr.responseText);
-          const error = JSON.parse(xhr.responseText);
-          console.log(error)
+    return new Promise((resolve, reject) => {
+      console.log(file);
+      const storage = getStorage(firebase,"react-blog-app-668d1.appspot.com");
+      const storageRef = ref(storage, "images/"+file.name);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        null,
+        (error) => {
+          console.log(error);
           reject(error);
-        });
-      }
-    );
-  }
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+            console.log(url);
+            resolve({ data: { link: url } });
+          });
+        }
+      );
+    });
+    // return new Promise(
+    //   (resolve, reject) => {
+    //     const xhr = new XMLHttpRequest();
+    //     xhr.open('POST', 'https://api.imgur.com/3/image');
+    //     xhr.setRequestHeader('Authorization', 'Client-ID bcce8b1c141c214');
+    //     const data = new FormData();
+    //     data.append('image', file);
+    //     xhr.send(data);
+    //     xhr.addEventListener('load', () => {
+    //       const response = JSON.parse(xhr.responseText);
+    //       console.log(response)
+    //       resolve(response);
+    //     });
+    //     xhr.addEventListener('error', () => {
+    //       console.log(xhr.responseText);
+    //       const error = JSON.parse(xhr.responseText);
+    //       console.log(error)
+    //       reject(error);
+    //     });
+    //   }
+    // );
+  };
 
   useEffect(() => {
     if (articleId) {
-      axios.get(apiUrl + "/api/articles/" + articleId)
-        .then(res => {
+      axios
+        .get(apiUrl + "/api/articles/" + articleId)
+        .then((res) => {
           console.log(res);
           const data = res.data[0];
           setTitle(data.title);
           setPublished(data.published);
           setSelectedCategory(data.categoryIds);
           if (data.body !== null) {
-            if (!data.body.hasOwnProperty('entityMap')) {
+            if (!data.body.hasOwnProperty("entityMap")) {
               data.body = { ...data.body, entityMap: {} };
             }
             const _contentState = convertFromRaw(data.body);
@@ -220,20 +247,20 @@ export default function ArticlesAddEdit() {
             setEditorState(EditorState.createWithContent(_contentState));
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
         });
     }
 
-    axios.get(apiUrl + "/api/categories")
-      .then(res => {
+    axios
+      .get(apiUrl + "/api/categories")
+      .then((res) => {
         console.log(res);
         setCategories(res.data);
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
       });
-
   }, [articleId, apiUrl]);
 
   const classes = useStyles();
@@ -241,46 +268,74 @@ export default function ArticlesAddEdit() {
   return (
     <>
       <div className={classes.appBarSpacer} />
-      <Grid container justify="center" alignItems="center" className={classes.container}>
+      <Grid
+        container
+        justify="center"
+        alignItems="center"
+        className={classes.container}
+      >
         <Grid item xs={12} md={10}>
           <div className={classes.root}>
             <Paper className={classes.paper} elevation={5}>
               <form noValidate autoComplete="off" onSubmit={saveArticle}>
                 <Grid container>
                   <Grid item xs={12}>
-
-                    {articleId ? (title && (<TextField id="outlined-basic" label="Title" variant="outlined" value={title} fullWidth={true} />)) :
-                      (<TextField id="outlined-basic" label="Title" variant="outlined" onChange={handleTitleChange} fullWidth={true} />)}
-
+                    {articleId ? (
+                      title && (
+                        <TextField
+                          id="outlined-basic"
+                          label="Title"
+                          variant="outlined"
+                          value={title}
+                          fullWidth={true}
+                        />
+                      )
+                    ) : (
+                      <TextField
+                        id="outlined-basic"
+                        label="Title"
+                        variant="outlined"
+                        onChange={handleTitleChange}
+                        fullWidth={true}
+                      />
+                    )}
                   </Grid>
                 </Grid>
                 <br />
                 <Grid container spacing={3} alignItems="center">
                   <Grid item xs={12} md={7}>
-                    {categories.length!==0 && <FormControl className={classes.formControl} fullWidth>
-                      <InputLabel id="demo-mutiple-chip-label">Categories</InputLabel>
-                      <Select
-                        labelId="demo-mutiple-chip-label"
-                        id="demo-mutiple-chip"
-                        multiple
-                        value={selectedCategory}
-                        onChange={handleSelectedCategoryChange}
-                        input={<Input id="select-multiple-chip" />}
-                        renderValue={(selected) => (
-                          <div className={classes.chips}>
-                            {selected.map((value, index) => (
-                              <Chip key={index} label={value.name} className={classes.chip} />
-                            ))}
-                          </div>
-                        )}
-                      >
-                        {categories.map((value, index) => (
-                          <MenuItem key={index} value={value}>
-                            {value.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>}
+                    {categories.length !== 0 && (
+                      <FormControl className={classes.formControl} fullWidth>
+                        <InputLabel id="demo-mutiple-chip-label">
+                          Categories
+                        </InputLabel>
+                        <Select
+                          labelId="demo-mutiple-chip-label"
+                          id="demo-mutiple-chip"
+                          multiple
+                          value={selectedCategory}
+                          onChange={handleSelectedCategoryChange}
+                          input={<Input id="select-multiple-chip" />}
+                          renderValue={(selected) => (
+                            <div className={classes.chips}>
+                              {selected.map((value, index) => (
+                                <Chip
+                                  key={index}
+                                  label={value.name}
+                                  className={classes.chip}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        >
+                          {categories.map((value, index) => (
+                            <MenuItem key={index} value={value}>
+                              {value.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
                   </Grid>
                   <Grid item xs={12} md={5}>
                     <Grid item>
@@ -301,43 +356,57 @@ export default function ArticlesAddEdit() {
                 <br />
                 <Grid container>
                   <Grid item xs={12}>
-                    {articleId ? (editorState && (<Editor
-                      editorState={editorState}
-                      onEditorStateChange={handleEditorChange}
-                      handlePastedText={handlePastedText}
-                      toolbarClassName="toolbarClassName"
-                      wrapperClassName="wrapperClassName"
-                      editorStyle={editorStyles}
-                      toolbarStyle={toolbarStyles}
-                      toolbar={
-                        {image: {uploadCallback: uploadImageCallBack, alt: { present: true, mandatory: false }}}
-                      }
-                    />)) : (<Editor
-                      editorState={editorState}
-                      onEditorStateChange={handleEditorChange}
-                      handlePastedText={handlePastedText}
-                      toolbarClassName="toolbarClassName"
-                      wrapperClassName="wrapperClassName"
-                      editorStyle={editorStyles}
-                      toolbarStyle={toolbarStyles}
-                      toolbar={
-                        {image: {uploadCallback: uploadImageCallBack, alt: { present: true, mandatory: false }}}
-                      }
-                    />)}
+                    {articleId ? (
+                      editorState && (
+                        <Editor
+                          editorState={editorState}
+                          onEditorStateChange={handleEditorChange}
+                          handlePastedText={handlePastedText}
+                          toolbarClassName="toolbarClassName"
+                          wrapperClassName="wrapperClassName"
+                          editorStyle={editorStyles}
+                          toolbarStyle={toolbarStyles}
+                          toolbar={{
+                            image: {
+                              uploadCallback: uploadImageCallBack,
+                              alt: { present: true, mandatory: false },
+                            },
+                          }}
+                        />
+                      )
+                    ) : (
+                      <Editor
+                        editorState={editorState}
+                        onEditorStateChange={handleEditorChange}
+                        handlePastedText={handlePastedText}
+                        toolbarClassName="toolbarClassName"
+                        wrapperClassName="wrapperClassName"
+                        editorStyle={editorStyles}
+                        toolbarStyle={toolbarStyles}
+                        toolbar={{
+                          image: {
+                            uploadCallback: uploadImageCallBack,
+                            alt: { present: true, mandatory: false },
+                          },
+                        }}
+                      />
+                    )}
                   </Grid>
                 </Grid>
                 <Grid container justify="space-evenly">
                   <Grid item>
-                    <Button type="submit" variant="contained" color="primary"
-                      disabled={saving}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      color="primary"
+                      disabled={saving}
+                    >
                       Save
                     </Button>
                   </Grid>
                   <Grid item>
-                    <Link to={"../articles"} style={{ textDecoration: 'none' }}>
-                      <Button variant="contained">
-                        Cancel
-                      </Button>
+                    <Link to={"../articles"} style={{ textDecoration: "none" }}>
+                      <Button variant="contained">Cancel</Button>
                     </Link>
                   </Grid>
                 </Grid>
